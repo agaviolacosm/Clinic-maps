@@ -172,33 +172,82 @@
     map.on("mouseenter", LAYER_ID, () => map.getCanvas().style.cursor = "pointer");
     map.on("mouseleave", LAYER_ID, () => map.getCanvas().style.cursor = "");
 
-    // Click popup
-    map.on("click", LAYER_ID, (e) => {
-      const f = e.features && e.features[0];
-      if (!f) return;
+    // Click popup (uses your real headers)
+map.on("click", (e) => {
+  const features = map.queryRenderedFeatures(e.point, { layers: [LAYER_ID] });
+  const f = features[0];
+  if (!f) return;
 
-      const p = f.properties || {};
-      const name = p[COL_NAME] || "Clinic";
-      const address = p[COL_ADDRESS] || "";
-      const phone = p[COL_PHONE] || "";
-      const website = p[COL_WEBSITE] || "";
+  const p = f.properties || {};
 
-      const websiteHtml = website
-        ? `<div style="margin-top:6px;"><a href="${website}" target="_blank" rel="noopener">Visit website</a></div>`
-        : "";
+  // Basic HTML escape so weird characters don't break your popup
+  const esc = (s) =>
+    String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
 
-      new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div style="font-family: system-ui; font-size: 14px; line-height: 1.35;">
-            <div style="font-weight: 700; margin-bottom: 6px;">${name}</div>
-            ${address ? `<div>${address}</div>` : ""}
-            ${phone ? `<div style="margin-top:6px;">📞 ${phone}</div>` : ""}
-            ${websiteHtml}
-          </div>
-        `)
-        .addTo(map);
-    });
+  // Normalize website links (so "www..." becomes clickable)
+  const normalizeUrl = (url) => {
+    const u = String(url || "").trim();
+    if (!u) return "";
+    if (u.startsWith("http://") || u.startsWith("https://")) return u;
+    return "https://" + u;
+  };
+
+  // Your sheet headers (mix of constants + direct header strings)
+  const name = p[COL_NAME] || "Clinic";
+  const company = p[COL_COMPANY] || "";
+  const phone = p[COL_PHONE] || "";
+
+  const addr1 = p[COL_ADDRESS1] || "";
+  const addr2 = p["Street Address 2"] || "";
+  const city = p[COL_CITY] || "";
+  const state = p[COL_STATE] || "";
+  const zip = p["Zip"] || "";
+  const country = p["Country"] || "";
+
+  const contactName = p["Contact name"] || "";
+  const contactEmail = p["Contact email"] || "";
+
+  const website = normalizeUrl(p[COL_WEBSITE] || "");
+
+  const addressLine1 = [addr1, addr2].filter(Boolean).join(", ");
+  const addressLine2 = [city, state, zip].filter(Boolean).join(", ");
+  const addressLine3 = country;
+
+  const websiteHtml = website
+    ? `<div style="margin-top:8px;">
+         <a href="${esc(website)}" target="_blank" rel="noopener">Visit website</a>
+       </div>`
+    : "";
+
+  const contactHtml =
+    contactName || contactEmail || phone
+      ? `<div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.1);">
+           ${contactName ? `<div><strong>Contact:</strong> ${esc(contactName)}</div>` : ""}
+           ${contactEmail ? `<div><strong>Email:</strong> ${esc(contactEmail)}</div>` : ""}
+           ${phone ? `<div><strong>Phone:</strong> ${esc(phone)}</div>` : ""}
+         </div>`
+      : "";
+
+  new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
+    .setLngLat(e.lngLat)
+    .setHTML(`
+      <div style="font-family: system-ui; font-size: 14px; line-height: 1.35; min-width: 220px;">
+        <div style="font-weight: 800; margin-bottom: 4px;">${esc(name)}</div>
+        ${company ? `<div style="opacity:0.85; margin-bottom:8px;">${esc(company)}</div>` : ""}
+        ${addressLine1 ? `<div>${esc(addressLine1)}</div>` : ""}
+        ${addressLine2 ? `<div>${esc(addressLine2)}</div>` : ""}
+        ${addressLine3 ? `<div>${esc(addressLine3)}</div>` : ""}
+        ${contactHtml}
+        ${websiteHtml}
+      </div>
+    `)
+    .addTo(map);
+});
 
     // Optional: auto-refresh data every 2 minutes (so new clinics show without redeploy)
     setInterval(async () => {
@@ -213,6 +262,7 @@
 </script>
 </body>
 </html>
+
 
 
 
