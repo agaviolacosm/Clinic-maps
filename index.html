@@ -226,7 +226,7 @@ map.on("click", (e) => {
       ? `<div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.1);">
            ${contactName ? `<div><strong>Contact:</strong> ${esc(contactName)}</div>` : ""}
            ${contactEmail ? `<div><strong>Email:</strong> ${esc(contactEmail)}</div>` : ""}
-           ${phone ? `<div><strong>Phone:</strong> ${esc(phone)}</div>` : ""}
+           ${phone ? `<div style="margin-top:4px;">📞 ${esc(phone)}</div>` : ""}
          </div>`
       : "";
 
@@ -257,6 +257,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
