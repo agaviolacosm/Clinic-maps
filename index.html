@@ -157,7 +157,9 @@
       }
     });
 
-
+//debugging 
+    console.log("Does my runtime layer exist?", map.getLayer(LAYER_ID));
+    
     // Hover cursor
     map.on("mouseenter", LAYER_ID, () => map.getCanvas().style.cursor = "pointer");
     map.on("mouseleave", LAYER_ID, () => map.getCanvas().style.cursor = "");
@@ -203,3 +205,4 @@
 </script>
 </body>
 </html>
+
