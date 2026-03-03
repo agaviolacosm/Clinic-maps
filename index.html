@@ -201,12 +201,10 @@ map.on("click", (e) => {
   const name = p[COL_NAME] || "Clinic";
   const phone = p[COL_PHONE] || "";
 
-  const addr1 = p[COL_ADDRESS1] || "";
+  const addr1 = p[COL_ADDRESS] || "";
   const addr2 = p["Street Address 2"] || "";
-  const city = p[COL_CITY] || "";
   const state = p[COL_STATE] || "";
   const zip = p["Zip"] || "";
-  const country = p["Country"] || "";
 
   const contactName = p["Contact name"] || "";
   const contactEmail = p["Contact email"] || "";
@@ -214,8 +212,8 @@ map.on("click", (e) => {
   const website = normalizeUrl(p[COL_WEBSITE] || "");
 
   const addressLine1 = [addr1, addr2].filter(Boolean).join(", ");
-  const addressLine2 = [city, state, zip].filter(Boolean).join(", ");
-  const addressLine3 = country;
+  const addressLine2 = [state, zip].filter(Boolean).join(", ");
+
 
   const websiteHtml = website
     ? `<div style="margin-top:8px;">
@@ -237,10 +235,8 @@ map.on("click", (e) => {
     .setHTML(`
       <div style="font-family: system-ui; font-size: 14px; line-height: 1.35; min-width: 220px;">
         <div style="font-weight: 800; margin-bottom: 4px;">${esc(name)}</div>
-        ${company ? `<div style="opacity:0.85; margin-bottom:8px;">${esc(company)}</div>` : ""}
         ${addressLine1 ? `<div>${esc(addressLine1)}</div>` : ""}
         ${addressLine2 ? `<div>${esc(addressLine2)}</div>` : ""}
-        ${addressLine3 ? `<div>${esc(addressLine3)}</div>` : ""}
         ${contactHtml}
         ${websiteHtml}
       </div>
@@ -261,6 +257,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
