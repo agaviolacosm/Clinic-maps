@@ -249,6 +249,7 @@ map.on("click", (e) => {
       try {
         const updated = await loadClinicsGeoJSON();
         map.getSource(SOURCE_ID).setData(updated);
+        console.log("Refreshed clinics:", updated.features.length);
       } catch (err) {
         console.warn("Refresh failed:", err);
       }
@@ -257,6 +258,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
