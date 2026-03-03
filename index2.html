@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Live Clinics Map</title>
+
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.js"></script>
+
+  <style>
+    body { margin: 0; }
+    #map { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script>
+  // ====== CONFIG ======
+  mapboxgl.accessToken = "pk.eyJ1IjoiYWdhdmlvbGEiLCJhIjoiY21rbGRodWZrMDN2ejNjb2k0am82ZTljeCJ9.lOZ8vPvRfOQ-TVUg41tzPw";
+  const STYLE_URL = "mapbox://styles/agaviola/cmklp9kuk002901rw6xcf5s8l";
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzzcO8WZx2nCzd8HLi165HIjTkL0J4GSz1rK3lE54yzRpR5pKyniJZ6ynmLDQqXZ-s75BqVnh01eUU/pub?gid=1549359146&single=true&output=csv"; // Published CSV URL
+  const SOURCE_ID = "clinics-live";
+  const LAYER_ID = "clinics-icons-live";
+
+  // Column names in Google Sheet (must match EXACTLY)
+  const COL_LAT = "Latitude";
+  const COL_LNG = "Longitude";
+  const COL_STATE = "State";
+
+  // Optional fields for popups (adjust to your actual columns)
+  const COL_NAME = "Name";       // or "Clinic Name"
+  const COL_ADDRESS = "Street Address 1"; // or "Full Address"
+  const COL_PHONE = "Phone";     // or "Contact phone"
+  const COL_WEBSITE = "Website";
+
+  // ====== CSV PARSER (handles quoted commas) ======
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], cur = "", inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i], next = text[i + 1];
+
+      if (ch === '"' && next === '"') { cur += '"'; i++; continue; }
+      if (ch === '"') { inQuotes = !inQuotes; continue; }
+
+      if (ch === "," && !inQuotes) { row.push(cur); cur = ""; continue; }
+
+      if ((ch === "\n" || ch === "\r") && !inQuotes) {
+        if (ch === "\r" && next === "\n") i++;
+        row.push(cur);
+        // skip empty trailing lines
+        if (row.some(cell => cell.trim() !== "")) rows.push(row);
+        row = []; cur = "";
+        continue;
+      }
+
+      cur += ch;
+    }
+
+    if (cur.length || row.length) {
+      row.push(cur);
+      if (row.some(cell => cell.trim() !== "")) rows.push(row);
+    }
+    return rows;
+  }
+
+  function toFeatureCollection(csvText) {
+    const rows = parseCSV(csvText);
+    if (!rows.length) return { type: "FeatureCollection", features: [] };
+
+    const header = rows[0].map(h => h.trim());
+    const idx = (name) => header.indexOf(name);
+
+    const latI = idx(COL_LAT);
+    const lngI = idx(COL_LNG);
+    if (latI === -1 || lngI === -1) {
+      throw new Error(`Missing required columns: ${COL_LAT} and/or ${COL_LNG}. Found: ${header.join(", ")}`);
+    }
+
+    const features = [];
+    for (let r = 1; r < rows.length; r++) {
+      const row = rows[r];
+      const lat = parseFloat((row[latI] || "").trim());
+      const lng = parseFloat((row[lngI] || "").trim());
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+      // Build properties object from all columns
+      const props = {};
+      for (let c = 0; c < header.length; c++) props[header[c]] = (row[c] || "").trim();
+
+      features.push({
+        type: "Feature",
+        properties: props,
+        geometry: { type: "Point", coordinates: [lng, lat] }
+      });
+    }
+
+    return { type: "FeatureCollection", features };
+  }
+
+  async function loadClinicsGeoJSON() {
+    // cache-bust so you see sheet updates quickly
+    const url = SHEET_CSV_URL + (SHEET_CSV_URL.includes("?") ? "&" : "?") + "t=" + Date.now();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch sheet CSV: HTTP ${res.status}`);
+    const csvText = await res.text();
+    return toFeatureCollection(csvText);
+  }
+
+  // ====== MAP INIT ======
+  const map = new mapboxgl.Map({
+    container: "map",
+    style: STYLE_URL,
+    center: [-95, 56],
+    zoom: 3.8
+  });
+
+  map.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+  map.on("load", async () => {
+    const geojson = await loadClinicsGeoJSON();
+
+    // Add (or update) source
+    map.addSource(SOURCE_ID, {
+      type: "geojson",
+      data: geojson
+      // You can enable clustering later if you want:
+      // cluster: true, clusterRadius: 50, clusterMaxZoom: 10
+    });
+
+    // Add icon layer
+    map.addLayer({
+      id: LAYER_ID,
+      type: "symbol",
+      source: SOURCE_ID,
+      layout: {
+        // pick a built-in icon from your style's sprite (or use your custom one)
+        "icon-image": "marker-15",
+        "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.8, 8, 1.2, 12, 1.6],
+        "icon-allow-overlap": true
+      },
+      paint: {
+        // Color by province/state
+        "icon-color": [
+          "match", ["get", COL_STATE],
+          "ON", "#000000",
+          "QC", "#1E5BFF",
+          "AB", "#FF7A00",
+          "BC", "#1AA6A6",
+          "SK", "#2E8B57",
+          "#999999"
+        ],
+        "icon-halo-color": "#ffffff",
+        "icon-halo-width": 1
+      }
+    });
+
+
+    // Hover cursor
+    map.on("mouseenter", LAYER_ID, () => map.getCanvas().style.cursor = "pointer");
+    map.on("mouseleave", LAYER_ID, () => map.getCanvas().style.cursor = "");
+
+    // Click popup
+    map.on("click", LAYER_ID, (e) => {
+      const f = e.features && e.features[0];
+      if (!f) return;
+
+      const p = f.properties || {};
+      const name = p[COL_NAME] || "Clinic";
+      const address = p[COL_ADDRESS] || "";
+      const phone = p[COL_PHONE] || "";
+      const website = p[COL_WEBSITE] || "";
+
+      const websiteHtml = website
+        ? `<div style="margin-top:6px;"><a href="${website}" target="_blank" rel="noopener">Visit website</a></div>`
+        : "";
+
+      new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 14px; line-height: 1.35;">
+            <div style="font-weight: 700; margin-bottom: 6px;">${name}</div>
+            ${address ? `<div>${address}</div>` : ""}
+            ${phone ? `<div style="margin-top:6px;">📞 ${phone}</div>` : ""}
+            ${websiteHtml}
+          </div>
+        `)
+        .addTo(map);
+    });
+
+    // Optional: auto-refresh data every 2 minutes (so new clinics show without redeploy)
+    setInterval(async () => {
+      try {
+        const updated = await loadClinicsGeoJSON();
+        map.getSource(SOURCE_ID).setData(updated);
+      } catch (err) {
+        console.warn("Refresh failed:", err);
+      }
+    }, 120000);
+  });
+</script>
+</body>
+</html>
