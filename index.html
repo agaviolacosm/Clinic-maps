@@ -122,6 +122,11 @@
   map.on("load", async () => {
     const geojson = await loadClinicsGeoJSON();
 
+       //debugging 
+      map.on("mousemove", (e) => {
+  const fs = map.queryRenderedFeatures(e.point);
+  if (fs.length) console.log("Hovering layer:", fs[0].layer.id);
+});
     // Add (or update) source
     map.addSource(SOURCE_ID, {
       type: "geojson",
@@ -156,11 +161,8 @@
         "icon-halo-width": 1
       }
 
-      //debugging 
-      map.on("mousemove", (e) => {
-  const fs = map.queryRenderedFeatures(e.point);
-  if (fs.length) console.log("Hovering layer:", fs[0].layer.id);
-});
+     
+     
     });
 
 //debugging 
@@ -211,5 +213,6 @@
 </script>
 </body>
 </html>
+
 
 
