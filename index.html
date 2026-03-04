@@ -182,6 +182,9 @@ map.on("click", (e) => {
 
   const p = f.properties || {};
 
+  //debugging
+  console.log("STATE RAW:", JSON.stringify(p[COL_STATE]), "ALL KEYS:", Object.keys(p));
+
   // Basic HTML escape so weird characters don't break your popup
   const esc = (s) =>
     String(s ?? "")
@@ -260,6 +263,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
