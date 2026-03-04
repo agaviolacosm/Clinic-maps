@@ -123,9 +123,11 @@
     const geojson = await loadClinicsGeoJSON();
 
        //debugging 
-      map.on("mousemove", (e) => {
+     map.on("mousemove", (e) => {
   const fs = map.queryRenderedFeatures(e.point);
-  if (fs.length) console.log("Hovering layer:", fs[0].layer.id);
+  if (fs.length) {
+    console.log("Hovering layer:", fs[0]?.layer?.id);
+  }
 });
     // Add (or update) source
     map.addSource(SOURCE_ID, {
@@ -258,6 +260,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
