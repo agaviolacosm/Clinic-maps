@@ -189,6 +189,8 @@ map.on("click", (e) => {
   const features = map.queryRenderedFeatures(e.point, { layers: [LAYER_ID] });
   const f = features[0];
   if (!f) return;
+  
+  const p = f.properties || {};
 
 //Flys to pin location 
   map.flyTo({
@@ -198,9 +200,9 @@ map.on("click", (e) => {
   curve: 1.2,
   essential: true
 });
+ // small delay so popup appears after zoom
+  setTimeout(() => {
   
-  const p = f.properties || {};
-
   //debugging
   console.log("STATE RAW:", JSON.stringify(p[COL_STATE]), "ALL KEYS:", Object.keys(p));
 
@@ -266,6 +268,8 @@ map.on("click", (e) => {
       </div>
     `)
     .addTo(map);
+
+  }, 500); 
 });
 
     // Optional: auto-refresh data every 2 minutes (so new clinics show without redeploy)
@@ -282,6 +286,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
