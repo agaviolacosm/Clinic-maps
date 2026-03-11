@@ -137,6 +137,14 @@
       // cluster: true, clusterRadius: 50, clusterMaxZoom: 10
     });
 
+    //Custom icon 
+    await new Promise((resolve, reject) => {
+  map.loadImage("./location_on.png", (err, image) => {
+    if (err) return reject(err);
+    if (!map.hasImage("location_on")) map.addImage("location_on", image, { sdf: true });
+    resolve();
+  });
+});
     // Add icon layer
     map.addLayer({
       id: LAYER_ID,
@@ -146,7 +154,8 @@
         // pick a built-in icon from your style's sprite (or use your custom one)
         "icon-image": "location_on",
         "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.8, 8, 1.2, 12, 1.6],
-        "icon-allow-overlap": true
+        "icon-allow-overlap": true, 
+        "icon-ignore-placement": true
       },
       paint: {
         // Color by province/state
@@ -264,6 +273,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
