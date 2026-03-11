@@ -234,18 +234,85 @@ map.on("click", (e) => {
   const features = map.queryRenderedFeatures(e.point, { layers: [LAYER_ID] });
   const f = features[0];
   if (!f) return;
-
+  const p = f.properties || {};
+ 
+//Flys to pin location 
   map.flyTo({
-    center: f.geometry.coordinates,
-    zoom: 11,
-    speed: 0.9,
-    curve: 1.2,
-    essential: true
-  });
-
+  center: f.geometry.coordinates,
+  zoom: 11,
+  speed: 0.9,
+  curve: 1.2,
+  essential: true
+});
+// small delay so popup appears after zoom
   setTimeout(() => {
-    openClinicPopup(f);
-  }, 500);
+  //debugging
+  console.log("STATE RAW:", JSON.stringify(p[COL_STATE]), "ALL KEYS:", Object.keys(p));
+ 
+  // Basic HTML escape so weird characters don't break popup
+  const esc = (s) =>
+    String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+ 
+  // Normalize website links (so "www..." becomes clickable)
+  const normalizeUrl = (url) => {
+    const u = String(url || "").trim();
+    if (!u) return "";
+    if (u.startsWith("http://") || u.startsWith("https://")) return u;
+    return "https://" + u;
+  };
+ 
+  // sheet headers (mix of constants + direct header strings)
+  const name = p[COL_NAME] || "Clinic";
+  const phone = p[COL_PHONE] || "";
+ 
+  const addr1 = p[COL_ADDRESS] || "";
+  const addr2 = p["Street Address 2"] || "";
+  const state = p[COL_STATE] || "";
+  const zip = p["Zip"] || "";
+ 
+  const contactName = p["Contact name"] || "";
+  const contactEmail = p["Contact email"] || "";
+ 
+  const website = normalizeUrl(p[COL_WEBSITE] || "");
+ 
+  const addressLine1 = [addr1, addr2].filter(Boolean).join(", ");
+  const addressLine2 = [state, zip].filter(Boolean).join(", ");
+ 
+ 
+  const websiteHtml = website
+    ? `<div style="margin-top:8px;">
+<a href="${esc(website)}" target="_blank" rel="noopener">Visit website</a>
+</div>`
+    : "";
+ 
+  const contactHtml =
+    contactName || contactEmail || phone
+      ? `<div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.1);">
+           ${contactName ? `<div><strong>Contact:</strong> ${esc(contactName)}</div>` : ""}
+           ${contactEmail ? `<div><strong>Email:</strong> ${esc(contactEmail)}</div>` : ""}
+           ${phone ? `<div style="margin-top:4px;">📞 ${esc(phone)}</div>` : ""}
+</div>`
+      : "";
+ 
+  new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
+    .setLngLat(f.geometry.coordinates)
+    .setHTML(`
+<div style="font-family: system-ui; font-size: 14px; line-height: 1.35; min-width: 220px;">
+<div style="font-weight: 800; margin-bottom: 4px;">${esc(name)}</div>
+        ${addressLine1 ? `<div>${esc(addressLine1)}</div>` : ""}
+        ${addressLine2 ? `<div>${esc(addressLine2)}</div>` : ""}
+        ${contactHtml}
+        ${websiteHtml}
+</div>
+    `)
+    .addTo(map);
+ 
+  }, 500); 
 });
 
     // Optional: auto-refresh data every 2 minutes (so new clinics show without redeploy)
@@ -313,6 +380,7 @@ document.getElementById("clinic-search").addEventListener("keydown", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
