@@ -141,7 +141,8 @@
     await new Promise((resolve, reject) => {
   map.loadImage("./location_on.png", (err, image) => {
     if (err) return reject(err);
-    if (!map.hasImage("location_on")) map.addImage("location_on", image, { sdf: true });
+    
+    if (!map.hasImage("clinic-pin")) map.addImage("clinic-pin", image, { sdf: true });
     resolve();
   });
 });
@@ -152,7 +153,7 @@
       source: SOURCE_ID,
       layout: {
         // pick a built-in icon from your style's sprite (or use your custom one)
-        "icon-image": "location_on",
+        "icon-image": "clinic-pin",
         "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.8, 8, 1.2, 12, 1.6],
         "icon-allow-overlap": true, 
         "icon-ignore-placement": true
@@ -273,6 +274,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
