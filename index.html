@@ -190,12 +190,21 @@ map.on("click", (e) => {
   const f = features[0];
   if (!f) return;
 
+//Flys to pin location 
+  map.flyTo({
+  center: f.geometry.coordinates,
+  zoom: 11,
+  speed: 0.9,
+  curve: 1.2,
+  essential: true
+});
+  
   const p = f.properties || {};
 
   //debugging
   console.log("STATE RAW:", JSON.stringify(p[COL_STATE]), "ALL KEYS:", Object.keys(p));
 
-  // Basic HTML escape so weird characters don't break your popup
+  // Basic HTML escape so weird characters don't break popup
   const esc = (s) =>
     String(s ?? "")
       .replaceAll("&", "&amp;")
@@ -212,7 +221,7 @@ map.on("click", (e) => {
     return "https://" + u;
   };
 
-  // Your sheet headers (mix of constants + direct header strings)
+  // sheet headers (mix of constants + direct header strings)
   const name = p[COL_NAME] || "Clinic";
   const phone = p[COL_PHONE] || "";
 
@@ -273,6 +282,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
