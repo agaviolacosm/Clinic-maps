@@ -257,7 +257,7 @@ map.on("click", (e) => {
       : "";
 
   new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
-    .setLngLat(e.lngLat)
+    .setLngLat(f.geometry.coordinates)
     .setHTML(`
       <div style="font-family: system-ui; font-size: 14px; line-height: 1.35; min-width: 220px;">
         <div style="font-weight: 800; margin-bottom: 4px;">${esc(name)}</div>
@@ -286,6 +286,7 @@ map.on("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
