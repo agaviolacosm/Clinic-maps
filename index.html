@@ -372,24 +372,50 @@ map.on("click", (e) => {
 
   const features = source._data.features;
 
-  const match = features.find((feature) => {
-    const clinicName = (feature.properties?.[COL_NAME] || "").toLowerCase();
-    return clinicName.includes(query);
+const provinceMatches = features.filter((feature) => {
+  const province = (feature.properties?.[COL_STATE] || "").toLowerCase();
+  return province === query;
+});
+
+if (provinceMatches.length > 0) {
+  const bounds = new mapboxgl.LngLatBounds();
+
+  provinceMatches.forEach((feature) => {
+    bounds.extend(feature.geometry.coordinates);
   });
 
-  if (!match) {
-    alert("No clinic found with that name.");
-    return;
-  }
-
-  map.flyTo({
-    center: match.geometry.coordinates,
-    zoom: 11,
-    speed: 0.9,
-    curve: 1.2,
-    essential: true
+  map.fitBounds(bounds, {
+    padding: 60,
+    maxZoom: 10
   });
 
+  return;
+}
+
+const match = features.find((feature) => {
+  const clinicName = (feature.properties?.[COL_NAME] || "").toLowerCase();
+  const city = (feature.properties?.["City"] || "").toLowerCase();
+  const province = (feature.properties?.[COL_STATE] || "").toLowerCase();
+
+  return (
+    clinicName.includes(query) ||
+    city.includes(query) ||
+    province.includes(query)
+  );
+});
+
+if (!match) {
+  alert("No clinic found with that name.");
+  return;
+}
+
+map.flyTo({
+  center: match.geometry.coordinates,
+  zoom: 11,
+  speed: 0.9,
+  curve: 1.2,
+  essential: true
+});
   setTimeout(() => {
     map.fire("click", {
       point: map.project(match.geometry.coordinates),
@@ -499,6 +525,7 @@ document.addEventListener("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
