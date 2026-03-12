@@ -452,7 +452,7 @@ function showSuggestions() {
     const clinicName = feature.properties?.[COL_NAME] || "Unamed clinic"; 
     const province = feature.properties?.[COL_STATE] || ""; 
     item.innerHTML = 
-      <div style="font-weight; 600;">${clinicName}</div>
+      <div style="font-weight: 600;">${clinicName}</div>
       <div style="font-size: 12px; color: #666;">${province}</div>
           ;
 
@@ -498,6 +498,7 @@ document.addEventListener("click", (e) => {
 </script>
 </body>
 </html>
+
 
 
 
